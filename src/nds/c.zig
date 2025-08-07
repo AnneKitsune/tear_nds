@@ -5,4 +5,3 @@ pub const c = @cImport({
     @cInclude("nds.h");
     @cInclude("stdio.h");
 });
-

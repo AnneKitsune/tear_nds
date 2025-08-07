@@ -8,7 +8,7 @@ Provides an easy and convenient way to compile for nds and use functions from [D
 4. zig build
 5. zig build run (to run in an emulator)
 
-The .nds file will be in zig-out/name.nds.
+The .nds file will be in zig-out/bin/name.nds.
 
 ### Going further
 The documentation for libnds, which is what actually does the heavy lifting of communicating with the DS, is available here: https://libnds.devkitpro.org/files.html
