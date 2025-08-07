@@ -1,7 +1,7 @@
 const std = @import("std");
 const builtin = @import("builtin");
 
-const emulator = "desmume";
+const emulator = "melonDS";
 
 pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});
@@ -17,10 +17,11 @@ pub fn build(b: *std.Build) void {
     const nds = compileNds(b, "src/main.zig", optimize, "zig-nds");
     b.default_step.dependOn(&nds.step);
 
-    const run_emulator_cmd = b.addSystemCommand(&.{ emulator, "zig-out/zig-nds.nds" });
+    // `zig build run` starts the emulator and runs the game.
+    const run_emulator_cmd = b.addSystemCommand(&.{ emulator, "zig-out/bin/zig-nds.nds" });
     run_emulator_cmd.step.dependOn(&nds.step);
 
-    const run_step = b.step("run", "Run in an emulator (desmume)");
+    const run_step = b.step("run", "Run in an emulator (melonDS)");
     run_step.dependOn(&run_emulator_cmd.step);
 }
 

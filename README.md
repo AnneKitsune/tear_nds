@@ -3,9 +3,9 @@
 Provides an easy and convenient way to compile for nds and use functions from [DevKitPro](https://devkitpro.org/).
 
 1. Install zig 0.14 / 0.15.
-2. `nix develop`.
-4. zig build
-5. zig build run (to run in an emulator)
+2. `nix develop`
+4. zig build # creates a .nds file
+5. zig build run # runs the .nds file in the `melonDS` emulator
 
 The .nds file will be in zig-out/bin/name.nds.
 
