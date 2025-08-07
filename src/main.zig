@@ -1,7 +1,5 @@
 const c = @import("nds/c.zig").c;
 
-//extern fn consoleDemoInit() void; // TODO: This should be removed
-
 export fn vblank() void {
 }
 

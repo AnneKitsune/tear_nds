@@ -25,6 +25,10 @@
       # No more shell hooks!
       devShells.default = pkgs.mkShell.override {stdenv = pkgs.devkitNix.stdenvARM;} {};
 
+      postInstall = ''
+      ./setup.sh
+      '';
+
       packages.default = pkgs.stdenv.mkDerivation {
         name = "devkitA64-example";
         src = ./.;
