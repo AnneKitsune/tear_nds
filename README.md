@@ -4,7 +4,6 @@ Provides an easy and convenient way to compile for nds and use functions from [D
 
 1. Install zig 0.14 / 0.15.
 2. `nix develop`.
-3. ./setup.sh
 4. zig build
 5. zig build run (to run in an emulator)
 

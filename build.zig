@@ -52,12 +52,12 @@ pub fn compileNds(b: *std.Build, root_file: []const u8, optimize: std.builtin.Op
         .root_module = nds_ex_mod,
     });
 
-    nds_ex_obj.setLibCFile(b.path("libc.txt"));
     nds_ex_obj.addIncludePath(.{ .cwd_relative = b.fmt("{s}/libnds/include", .{devkitpro}) });
     nds_ex_obj.addIncludePath(.{ .cwd_relative = b.fmt("{s}/portlibs/nds/include", .{devkitpro}) });
     nds_ex_obj.addIncludePath(.{ .cwd_relative = b.fmt("{s}/portlibs/armv5te/include", .{devkitpro}) });
     nds_ex_obj.addIncludePath(.{ .cwd_relative = b.fmt("{s}/portlibs/armv4t/include", .{devkitpro}) });
     nds_ex_obj.addIncludePath(.{ .cwd_relative = b.fmt("{s}/calico/include", .{devkitpro}) });
+    nds_ex_obj.addSystemIncludePath(.{ .cwd_relative = b.fmt("{s}/arm-none-eabi/include", .{devkitarm}) });
 
     const install_obj = b.addInstallBinFile(nds_ex_obj.getEmittedBin(), b.fmt("{s}.o", .{name}));
 
