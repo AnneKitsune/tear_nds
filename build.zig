@@ -3,8 +3,18 @@ const builtin = @import("builtin");
 
 const emulator = "melonDS";
 
+var devkitpro: []u8 = undefined;
+var devkitarm: []u8 = undefined;
+
 pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});
+
+    devkitpro = std.process.getEnvVarOwned(b.allocator, "DEVKITPRO") catch {
+        @panic("Missing DEVKITPRO env var.");
+    };
+    devkitarm = std.process.getEnvVarOwned(b.allocator, "DEVKITARM") catch {
+        @panic("Missing DEVKITARM env var.");
+    };
 
     //    const nds_lib_mod = b.createModule(.{
     //        .root_source_file = b.path("src/root.zig"),
@@ -14,36 +24,52 @@ pub fn build(b: *std.Build) void {
     //    });
 
     // by default, running just `zig build` will create zig-out/zig-nds.nds
-    const nds = compileNds(b, "src/main.zig", optimize, "zig-nds");
+    const nds = compileNds(b, "src/main.zig", optimize, "zig_nds_example");
     b.default_step.dependOn(&nds.step);
 
     // `zig build run` starts the emulator and runs the game.
-    const run_emulator_cmd = b.addSystemCommand(&.{ emulator, "zig-out/bin/zig-nds.nds" });
+    const run_emulator_cmd = b.addSystemCommand(&.{ emulator, "zig-out/bin/zig_nds_example.nds" });
     run_emulator_cmd.step.dependOn(&nds.step);
 
     const run_step = b.step("run", "Run in an emulator (melonDS)");
     run_step.dependOn(&run_emulator_cmd.step);
+
+    // export lib
+    const lib_mod = b.createModule(.{
+        .root_source_file = b.path("src/root.zig"),
+        .target = ndsTarget(b),
+        .optimize = optimize,
+        .link_libc = true,
+    });
+    const nds_lib = b.addLibrary(.{
+        .name = "tear_nds",
+        .root_module = lib_mod,
+    });
+    setDeps(b, nds_lib);
 }
 
-pub fn compileNds(b: *std.Build, root_file: []const u8, optimize: std.builtin.OptimizeMode, name: []const u8) *std.Build.Step.Run {
-    const devkitpro = std.process.getEnvVarOwned(b.allocator, "DEVKITPRO") catch {
-        @panic("Missing DEVKITPRO env var.");
-    };
-    const devkitarm = std.process.getEnvVarOwned(b.allocator, "DEVKITARM") catch {
-        @panic("Missing DEVKITARM env var.");
-    };
-
-    // cpu target of the nds
-    const nds_target = b.resolveTargetQuery(.{
+fn ndsTarget(b: *std.Build) std.Build.ResolvedTarget {
+    return b.resolveTargetQuery(.{
         .cpu_arch = .thumb,
         .os_tag = .freestanding,
         .cpu_model = .{ .explicit = &std.Target.arm.cpu.arm946e_s },
     });
+}
 
+fn setDeps(b: *std.Build, step: *std.Build.Step.Compile) void {
+    step.addIncludePath(.{ .cwd_relative = b.fmt("{s}/libnds/include", .{devkitpro}) });
+    step.addIncludePath(.{ .cwd_relative = b.fmt("{s}/portlibs/nds/include", .{devkitpro}) });
+    step.addIncludePath(.{ .cwd_relative = b.fmt("{s}/portlibs/armv5te/include", .{devkitpro}) });
+    step.addIncludePath(.{ .cwd_relative = b.fmt("{s}/portlibs/armv4t/include", .{devkitpro}) });
+    step.addIncludePath(.{ .cwd_relative = b.fmt("{s}/calico/include", .{devkitpro}) });
+    step.addSystemIncludePath(.{ .cwd_relative = b.fmt("{s}/arm-none-eabi/include", .{devkitarm}) });
+}
+
+pub fn compileNds(b: *std.Build, root_file: []const u8, optimize: std.builtin.OptimizeMode, name: []const u8) *std.Build.Step.Run {
     // code -> .o
     const nds_ex_mod = b.createModule(.{
         .root_source_file = b.path(root_file),
-        .target = nds_target,
+        .target = ndsTarget(b),
         .optimize = optimize,
         .link_libc = true,
     });
@@ -53,12 +79,7 @@ pub fn compileNds(b: *std.Build, root_file: []const u8, optimize: std.builtin.Op
         .root_module = nds_ex_mod,
     });
 
-    nds_ex_obj.addIncludePath(.{ .cwd_relative = b.fmt("{s}/libnds/include", .{devkitpro}) });
-    nds_ex_obj.addIncludePath(.{ .cwd_relative = b.fmt("{s}/portlibs/nds/include", .{devkitpro}) });
-    nds_ex_obj.addIncludePath(.{ .cwd_relative = b.fmt("{s}/portlibs/armv5te/include", .{devkitpro}) });
-    nds_ex_obj.addIncludePath(.{ .cwd_relative = b.fmt("{s}/portlibs/armv4t/include", .{devkitpro}) });
-    nds_ex_obj.addIncludePath(.{ .cwd_relative = b.fmt("{s}/calico/include", .{devkitpro}) });
-    nds_ex_obj.addSystemIncludePath(.{ .cwd_relative = b.fmt("{s}/arm-none-eabi/include", .{devkitarm}) });
+    setDeps(b, nds_ex_obj);
 
     const install_obj = b.addInstallBinFile(nds_ex_obj.getEmittedBin(), b.fmt("{s}.o", .{name}));
 
