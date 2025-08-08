@@ -9,6 +9,42 @@ Provides an easy and convenient way to compile for nds and use functions from [D
 
 The .nds file will be in zig-out/bin/name.nds.
 
+### Adding NDS support to your project
+
+build.zig
+```zig
+const std = @import("std");
+
+pub fn build(b: *std.Build) void {
+    const optimize = b.standardOptimizeOption(.{});
+
+    // So that you can call exported functions from tear_nds
+    const tear_nds = b.dependency("tear_nds", .{}).module("tear_nds");
+    // Creates the module + obj + elf + nds files for you and takes care of the includes/linker arguments.
+    const nds_step = @import("tear_nds").compileNds(b, .{
+        .root_file = b.path("src/main.zig"),
+        .optimize = optimize,
+        .name = "nds_test",
+        .imports = &.{
+            .{
+                .name = "nds",
+                .module = tear_nds,
+            },
+        },
+    });
+
+    // `zig build` will build for nds.
+    b.default_step.dependOn(&nds_step.step);
+}
+```
+
+src/main.zig
+```zig
+const nds = @import("nds").nds;
+// You need to export a c-style main. Then inside of the main you can call nds' functions.
+export fn main(_: c_int, _: [*]const [*:0]const u8) void {...}
+```
+
 ### Going further
 The documentation for libnds, which is what actually does the heavy lifting of communicating with the DS, is available here: https://libnds.devkitpro.org/files.html
 Several examples are available here: https://github.com/devkitPro/nds-examples

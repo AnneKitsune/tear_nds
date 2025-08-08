@@ -6,13 +6,6 @@ const emulator = "melonDS";
 pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});
 
-    //    const nds_lib_mod = b.createModule(.{
-    //        .root_source_file = b.path("src/root.zig"),
-    //        .target = nds_target,
-    //        .optimize = optimize,
-    //        .link_libc = true,
-    //    });
-
     // by default, running just `zig build` will create zig-out/zig-nds.nds
     const nds = compileNds(b, .{
         .name = "zig_nds_example",
@@ -29,17 +22,17 @@ pub fn build(b: *std.Build) void {
     run_step.dependOn(&run_emulator_cmd.step);
 
     // export lib
-    _ = b.addModule("tear_nds", .{
+    const lib_mod = b.addModule("tear_nds", .{
         .root_source_file = b.path("src/root.zig"),
         .target = ndsTarget(b),
         .optimize = optimize,
         .link_libc = true,
     });
-    //const nds_lib = b.addLibrary(.{
-    //.name = "tear_nds",
-    //.root_module = lib_mod,
-    //});
-    //setDeps(b, nds_lib);
+    const nds_lib = b.addLibrary(.{
+        .name = "tear_nds",
+        .root_module = lib_mod,
+    });
+    setDeps(b, nds_lib);
 }
 
 fn ndsTarget(b: *std.Build) std.Build.ResolvedTarget {
