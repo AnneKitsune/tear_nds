@@ -24,7 +24,11 @@ pub fn build(b: *std.Build) void {
     //    });
 
     // by default, running just `zig build` will create zig-out/zig-nds.nds
-    const nds = compileNds(b, "src/main.zig", optimize, "zig_nds_example");
+    const nds = compileNds(b, .{
+        .name = "zig_nds_example",
+        .optimize = optimize,
+        .root_file = b.path("src/main.zig"),
+    });
     b.default_step.dependOn(&nds.step);
 
     // `zig build run` starts the emulator and runs the game.
@@ -65,23 +69,32 @@ fn setDeps(b: *std.Build, step: *std.Build.Step.Compile) void {
     step.addSystemIncludePath(.{ .cwd_relative = b.fmt("{s}/arm-none-eabi/include", .{devkitarm}) });
 }
 
-pub fn compileNds(b: *std.Build, root_file: []const u8, optimize: std.builtin.OptimizeMode, name: []const u8) *std.Build.Step.Run {
+/// Options needed to create the zig module for the nds obj.
+pub const NdsOptions = struct {
+    name: []const u8,
+    optimize: std.builtin.OptimizeMode,
+    root_file: std.Build.LazyPath,
+    imports: []const std.Build.Module.Import = &.{},
+};
+
+pub fn compileNds(b: *std.Build, opts: NdsOptions) *std.Build.Step.Run {
     // code -> .o
     const nds_ex_mod = b.createModule(.{
-        .root_source_file = b.path(root_file),
+        .root_source_file = opts.root_file,
         .target = ndsTarget(b),
-        .optimize = optimize,
+        .optimize = opts.optimize,
         .link_libc = true,
+        .imports = opts.imports,
     });
 
     var nds_ex_obj = b.addObject(.{
-        .name = name,
+        .name = opts.name,
         .root_module = nds_ex_mod,
     });
 
     setDeps(b, nds_ex_obj);
 
-    const install_obj = b.addInstallBinFile(nds_ex_obj.getEmittedBin(), b.fmt("{s}.o", .{name}));
+    const install_obj = b.addInstallBinFile(nds_ex_obj.getEmittedBin(), b.fmt("{s}.o", .{opts.name}));
 
     // .o -> .elf
     const extension = if (builtin.target.os.tag == .windows) ".exe" else "";
@@ -90,9 +103,9 @@ pub fn compileNds(b: *std.Build, root_file: []const u8, optimize: std.builtin.Op
         "-g",
         "-mthumb",
         "-mthumb-interwork",
-        b.fmt("-Wl,-Map,zig-out/{s}.map", .{name}),
+        b.fmt("-Wl,-Map,zig-out/{s}.map", .{opts.name}),
         b.fmt("-specs={s}/calico/share/ds9.specs", .{devkitpro}),
-        b.fmt("zig-out/bin/{s}.o", .{name}),
+        b.fmt("zig-out/bin/{s}.o", .{opts.name}),
         b.fmt("-L{s}/libnds/lib", .{devkitpro}),
         b.fmt("-L{s}/portlibs/nds/lib", .{devkitpro}),
         b.fmt("-L{s}/portlibs/armv5te/lib", .{devkitpro}),
@@ -101,16 +114,16 @@ pub fn compileNds(b: *std.Build, root_file: []const u8, optimize: std.builtin.Op
         "-lnds9",
         "-lcalico_ds9",
         "-o",
-        b.fmt("zig-out/{s}.elf", .{name}),
+        b.fmt("zig-out/{s}.elf", .{opts.name}),
     }));
 
     // elf -> .nds
     const nds = b.addSystemCommand(&.{
         b.fmt("{s}/tools/bin/ndstool" ++ extension, .{devkitpro}),
         "-c",
-        b.fmt("zig-out/bin/{s}.nds", .{name}),
+        b.fmt("zig-out/bin/{s}.nds", .{opts.name}),
         "-9",
-        b.fmt("zig-out/{s}.elf", .{name}),
+        b.fmt("zig-out/{s}.elf", .{opts.name}),
         "-7",
         b.fmt("{s}/calico/bin/ds7_maine.elf", .{devkitpro}),
     });
