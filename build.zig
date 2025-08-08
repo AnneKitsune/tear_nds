@@ -39,17 +39,17 @@ pub fn build(b: *std.Build) void {
     run_step.dependOn(&run_emulator_cmd.step);
 
     // export lib
-    const lib_mod = b.createModule(.{
+    _ = b.addModule("tear_nds", .{
         .root_source_file = b.path("src/root.zig"),
         .target = ndsTarget(b),
         .optimize = optimize,
         .link_libc = true,
     });
-    const nds_lib = b.addLibrary(.{
-        .name = "tear_nds",
-        .root_module = lib_mod,
-    });
-    setDeps(b, nds_lib);
+    //const nds_lib = b.addLibrary(.{
+    //.name = "tear_nds",
+    //.root_module = lib_mod,
+    //});
+    //setDeps(b, nds_lib);
 }
 
 fn ndsTarget(b: *std.Build) std.Build.ResolvedTarget {
