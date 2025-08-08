@@ -1,7 +1,7 @@
 .{
-    .name = .tear_nds,
+    .name = .anne_nds_dev,
     .version = "0.1.0",
-    .fingerprint = 0xcdb63bea798d8b01, // Changing this has security and trust implications.
+    .fingerprint = 0x149e9d7c86565e0e, // Changing this has security and trust implications.
     .minimum_zig_version = "0.15.0-dev.1380+e98aeeb73",
     .paths = .{
         "build.zig",

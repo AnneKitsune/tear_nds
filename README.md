@@ -18,17 +18,17 @@ const std = @import("std");
 pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});
 
-    // So that you can call exported functions from tear_nds
-    const tear_nds = b.dependency("tear_nds", .{}).module("tear_nds");
+    // So that you can call exported functions from anne_nds_dev
+    const anne_nds_dev = b.dependency("anne_nds_dev", .{}).module("anne_nds_dev");
     // Creates the module + obj + elf + nds files for you and takes care of the includes/linker arguments.
-    const nds_step = @import("tear_nds").compileNds(b, .{
+    const nds_step = @import("anne_nds_dev").compileNds(b, .{
         .root_file = b.path("src/main.zig"),
         .optimize = optimize,
         .name = "nds_test",
         .imports = &.{
             .{
                 .name = "nds",
-                .module = tear_nds,
+                .module = anne_nds_dev,
             },
         },
     });
