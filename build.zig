@@ -3,18 +3,8 @@ const builtin = @import("builtin");
 
 const emulator = "melonDS";
 
-var devkitpro: []u8 = undefined;
-var devkitarm: []u8 = undefined;
-
 pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});
-
-    devkitpro = std.process.getEnvVarOwned(b.allocator, "DEVKITPRO") catch {
-        @panic("Missing DEVKITPRO env var.");
-    };
-    devkitarm = std.process.getEnvVarOwned(b.allocator, "DEVKITARM") catch {
-        @panic("Missing DEVKITARM env var.");
-    };
 
     //    const nds_lib_mod = b.createModule(.{
     //        .root_source_file = b.path("src/root.zig"),
@@ -61,6 +51,13 @@ fn ndsTarget(b: *std.Build) std.Build.ResolvedTarget {
 }
 
 fn setDeps(b: *std.Build, step: *std.Build.Step.Compile) void {
+    const devkitpro = std.process.getEnvVarOwned(b.allocator, "DEVKITPRO") catch {
+        @panic("Missing DEVKITPRO env var.");
+    };
+    const devkitarm = std.process.getEnvVarOwned(b.allocator, "DEVKITARM") catch {
+        @panic("Missing DEVKITARM env var.");
+    };
+
     step.addIncludePath(.{ .cwd_relative = b.fmt("{s}/libnds/include", .{devkitpro}) });
     step.addIncludePath(.{ .cwd_relative = b.fmt("{s}/portlibs/nds/include", .{devkitpro}) });
     step.addIncludePath(.{ .cwd_relative = b.fmt("{s}/portlibs/armv5te/include", .{devkitpro}) });
@@ -78,6 +75,13 @@ pub const NdsOptions = struct {
 };
 
 pub fn compileNds(b: *std.Build, opts: NdsOptions) *std.Build.Step.Run {
+    const devkitpro = std.process.getEnvVarOwned(b.allocator, "DEVKITPRO") catch {
+        @panic("Missing DEVKITPRO env var.");
+    };
+    const devkitarm = std.process.getEnvVarOwned(b.allocator, "DEVKITARM") catch {
+        @panic("Missing DEVKITARM env var.");
+    };
+
     // code -> .o
     const nds_ex_mod = b.createModule(.{
         .root_source_file = opts.root_file,
